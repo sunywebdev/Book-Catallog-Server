@@ -1,115 +1,79 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { User } from '@prisma/client';
+import { prisma } from '../../../shared/prisma';
+import ApiError from '../../../errors/Apierror';
 import httpStatus from 'http-status';
-import ApiError from '../../../errors/ApiError';
-import { User } from '../users/user.model';
-import { ILoginUser } from './auth.interface';
-import { JwtPayload, Secret } from 'jsonwebtoken';
-import config from '../../../config';
-import { JwtHelper } from '../../../helpers/jwt';
-import { IChangePassword } from '../../../interfaces/common';
 import bcrypt from 'bcrypt';
+import { jwtHelpers } from '../../../helpers/jwtHelpers';
+import config from '../../../config';
+import { Secret } from 'jsonwebtoken';
+import { ILoginUser, ILoginUserResponse } from './auth.interface';
 
-const loginUser = async (loginData: ILoginUser) => {
-  const { email, password } = loginData;
-  const isUserExist = await User.isUserExist(email);
-  if (!isUserExist) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-  const isPasswordMatch =
-    isUserExist.password &&
-    (await User.isPasswordMatch(password, isUserExist.password));
-
-  if (!isPasswordMatch) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Password is incorrect');
-  }
-
-  const { email: userEmail, role, needChangePassword } = isUserExist;
-  const accessToken = JwtHelper.createToken(
-    {
-      userEmail,
-      role,
+export const insertIntoDB = async (payload: User) => {
+  const isExist = await prisma.user.findFirst({
+    where: {
+      email: payload.email,
     },
+  });
+  if (isExist) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Already exist this email');
+  }
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
+  const result = await prisma.user.create({
+    data: {
+      ...payload,
+      password: hashedPassword,
+    },
+  });
+  if (!result) {
+    throw new ApiError(404, 'Something Went wrong');
+  }
+
+  const { password, ...userWithoutPassword } = result;
+
+  return userWithoutPassword;
+};
+const loginUser = async (payload: ILoginUser): Promise<ILoginUserResponse> => {
+  const { email, password } = payload;
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, 'User does not exist');
+  }
+
+  const isPasswordMatched = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordMatched) {
+    throw new Error('Incorrect password');
+  }
+
+  //create access token & refresh token
+
+  const accessToken = jwtHelpers.createToken(
+    { email: user.email, role: user.role, id: user.id },
     config.jwt.secret as Secret,
-    config.jwt.secret_expires_in as string
+    config.jwt.expires_in as string,
   );
 
-  const refreshToken = JwtHelper.createToken(
-    {
-      userEmail,
-      role,
-    },
+  //Create refresh token
+  const refreshToken = jwtHelpers.createToken(
+    { email: user.email, role: user.role, id: user.id },
     config.jwt.refresh_secret as Secret,
-    config.jwt.refresh_secret_expires_in as string
+    config.jwt.refresh_expires_in as string,
   );
 
   return {
     accessToken,
     refreshToken,
-    needChangePassword,
   };
 };
-
-const refreshToken = async (refreshToken: string) => {
-  let verifiedToken;
-  try {
-    verifiedToken = JwtHelper.verifyToken(
-      refreshToken,
-      config.jwt.refresh_secret as Secret
-    );
-  } catch (error) {
-    throw new ApiError(httpStatus.FORBIDDEN, 'Invalid refresh token');
-  }
-  const { userEmail } = verifiedToken;
-  const isUserExist = await User.isUserExist(userEmail as string);
-  if (!isUserExist) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-  const newAccessToken = JwtHelper.createToken(
-    {
-      email: isUserExist.email,
-      role: isUserExist.role,
-    },
-    config.jwt.refresh_secret as Secret,
-    config.jwt.refresh_secret_expires_in as string
-  );
-  return {
-    accessToken: newAccessToken,
-  };
-};
-
-const changePassword = async (
-  user: JwtPayload | null,
-  payload: IChangePassword
-): Promise<void> => {
-  const { oldPassword, newPassword } = payload;
-  const isUserExist = await User.isUserExist(user?.email);
-  if (!isUserExist) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-  const isPasswordMatch =
-    isUserExist.password &&
-    (await User.isPasswordMatch(oldPassword, isUserExist.password));
-
-  if (!isPasswordMatch) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Password is incorrect');
-  }
-
-  const newHashedPassword = await bcrypt.hash(
-    newPassword,
-    Number(config.bcrypt_salt_rounds)
-  );
-
-  await User.findOneAndUpdate(
-    { email: user?.email },
-    {
-      password: newHashedPassword,
-      needChangePassword: false,
-      passwordChangedAt: new Date(),
-    }
-  );
-};
-
 export const AuthService = {
+  insertIntoDB,
   loginUser,
-  refreshToken,
-  changePassword,
 };

@@ -1,64 +1,41 @@
 import { Request, Response } from 'express';
+import catchAsync from '../../../shared/catchasync';
+import { AuthService } from './auth.service';
+import sendResponse from '../../../shared/sendResponse';
 import httpStatus from 'http-status';
 import config from '../../../config';
-import catchAsync from '../../../shared/catchAsync';
-import sendResponse from '../../../shared/sendResponse';
-import { AuthService } from './auth.service';
+// import config from '../../../config';
 
+const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
+  const result = await AuthService.insertIntoDB(req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User created successfully',
+    data: result,
+  });
+});
+//! Login User
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const { ...loginData } = req.body;
   const result = await AuthService.loginUser(loginData);
+
   const { refreshToken, ...others } = result;
 
-  // set cookies
   const cookieOptions = {
-    secure: config.node_type === 'production' ? true : false,
+    secure: config.env === 'production',
     httpOnly: true,
   };
   res.cookie('refreshToken', refreshToken, cookieOptions);
-
   sendResponse(res, {
-    message: 'User logged in successfully',
+    statusCode: 200,
     success: true,
+    message: 'User loggedin successfully !',
     data: others,
-    statusCode: httpStatus.OK,
-  });
-});
-
-const refreshToken = catchAsync(async (req: Request, res: Response) => {
-  const { refreshToken } = req.cookies;
-
-  const result = await AuthService.refreshToken(refreshToken);
-
-  // set cookies
-  const cookieOptions = {
-    secure: config.node_type === 'production' ? true : false,
-    httpOnly: true,
-  };
-  res.cookie('refreshToken', refreshToken, cookieOptions);
-
-  sendResponse(res, {
-    message: 'User logged in successfully',
-    success: true,
-    data: result,
-    statusCode: httpStatus.OK,
-  });
-});
-
-const changePassword = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user || {};
-  const { ...passwordData } = req.body;
-  const result = await AuthService.changePassword(user, passwordData);
-
-  sendResponse(res, {
-    message: 'Password changed successfully',
-    success: true,
-    data: result,
-    statusCode: httpStatus.OK,
   });
 });
 export const AuthController = {
+  insertIntoDB,
   loginUser,
-  refreshToken,
-  changePassword,
 };
