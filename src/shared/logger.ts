@@ -1,90 +1,53 @@
-import { createLogger, format, transports } from 'winston';
-const { combine, timestamp, label, printf, prettyPrint } = format;
-import config from '../config';
-import path from 'path';
-import DailyRotateFile from 'winston-daily-rotate-file';
+// import { createLogger, format, transports } from 'winston';
+// import path from 'path';
+// import DailyRotateFile from 'winston-daily-rotate-file';
 
-const productionFormat = printf(({ level, message, label, timestamp }) => {
-  const date = new Date(timestamp) as Date;
-  const hour = date.getHours();
-  const minutes = date.getMinutes();
-  const seconds = date.getSeconds();
-  return `${date.toDateString()} ${hour}:${minutes}:${seconds} [${label}] ${level}: ${message}`;
-});
+// const { combine, timestamp, label, printf, prettyPrint } = format;
 
-const devFormat = printf(({ level, message, timestamp }) => {
-  const date = new Date(timestamp) as Date;
-  const hour = date.getHours();
-  const minutes = date.getMinutes();
-  const seconds = date.getSeconds();
-  return `${date.toDateString()} ${hour}:${minutes}:${seconds} - ${level}: ${message}`;
-});
+// // Custom log
+// const myFormat = printf(({ level, message, label, timestamp }) => {
+//   const date = new Date(timestamp);
+//   const h = date.getHours();
+//   const m = date.getMinutes();
+//   const s = date.getSeconds();
 
-const logger = createLogger({
-  level: 'info',
-  format: combine(
-    label({ label: 'NodeExpressMongoose' }),
-    timestamp(),
-    productionFormat,
-    prettyPrint()
-  ),
-  transports: [
-    new transports.Console(),
-    new DailyRotateFile({
-      filename: path.join(
-        process.cwd(),
-        'logs',
-        'winston',
-        'successLogs',
-        '%DATE%-success.log'
-      ),
-      datePattern: 'DD-MM-YYYY-HH',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d',
-    }),
-  ],
-});
+//   return `${date.toDateString()} ${h}:${m} ${s} [${label}] ${level}: ${message}`;
+// });
 
-const errorLogger = createLogger({
-  level: 'error',
-  format: combine(
-    label({ label: 'NodeExpressMongoose' }),
-    timestamp(),
-    productionFormat,
-    prettyPrint()
-  ),
-  transports: [
-    new transports.Console(),
-    new DailyRotateFile({
-      filename: path.join(
-        process.cwd(),
-        'logs',
-        'winston',
-        'errorLogs',
-        '%DATE%-error.log'
-      ),
-      datePattern: 'DD-MM-YYYY-HH',
-      zippedArchive: true,
-      maxSize: '20m',
-      maxFiles: '14d',
-    }),
-  ],
-});
+// const logDir = path.join(process.cwd(), 'logs', 'winston');
 
-if (config.node_type !== 'production') {
-  logger.add(
-    new transports.Console({
-      format: devFormat,
-    })
-  );
-}
-if (config.node_type !== 'production') {
-  errorLogger.add(
-    new transports.Console({
-      format: devFormat,
-    })
-  );
-}
+// export const logger = createLogger({
+//   level: 'info',
+//   format: combine(label({ label: 'AP' }), timestamp(), myFormat, prettyPrint()),
+//   transports: [
+//     new transports.Console(),
+//     new transports.File({
+//       level: 'info',
+//       filename: path.join(logDir, 'successes', 'um-success.log'),
+//     }),
+//     new DailyRotateFile({
+//       level: 'info',
+//       filename: path.join(logDir, 'successes', 'um-%DATE%-success.log'),
+//       datePattern: 'YYYY-MM-DD-HH',
+//       zippedArchive: true,
+//       maxSize: '20m',
+//       maxFiles: '14d',
+//     }),
+//   ],
+// });
 
-export { logger, errorLogger };
+// export const errorLogger = createLogger({
+//   level: 'error',
+//   format: combine(label({ label: 'AP' }), timestamp(), myFormat),
+//   transports: [
+//     new transports.Console(),
+//     new DailyRotateFile({
+//       level: 'error',
+//       filename: path.join(logDir, 'errors', 'um-%DATE%-error.log'),
+//       datePattern: 'YYYY-MM-DD-HH',
+//       zippedArchive: true,
+//       maxSize: '20m',
+//       maxFiles: '14d',
+//     }),
+//   ],
+// });
