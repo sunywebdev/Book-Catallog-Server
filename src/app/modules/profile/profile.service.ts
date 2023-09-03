@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import ApiError from '../../../errors/Apierror';
-import { prisma } from '../../../shared/prisma';
 import httpStatus from 'http-status';
+import ApiError from '../../../errors/ApiError';
+import { prisma } from '../../../shared/prisma';
 
 const getMyProfile = async (user: any | null) => {
   const { id } = user;

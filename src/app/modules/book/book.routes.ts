@@ -1,6 +1,6 @@
 import express from 'express';
-import auth from '../../middlewares/auth';
 import { ENUM_USER_ROLE } from '../../../enums/user';
+import auth from '../../middlewares/auth';
 import { BookController } from './book.controller';
 
 const router = express.Router();

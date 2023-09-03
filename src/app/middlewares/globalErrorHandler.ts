@@ -6,11 +6,12 @@ import config from '../../config';
 
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
-import IGenericErrorMessage from '../../interfaces/error';
+import ApiError from '../../errors/ApiError';
+import handleClientError from '../../errors/handleClientError';
 import handleValidationError from '../../errors/handleValidationError';
 import { handleZodError } from '../../errors/handleZodError';
-import handleClientError from '../../errors/handleClientError';
-import ApiError from '../../errors/Apierror';
+import IGenericErrorMessage from '../../interfaces/error';
+
 
 const globalErrorHandler: ErrorRequestHandler = (
   error,

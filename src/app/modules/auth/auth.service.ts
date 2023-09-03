@@ -1,13 +1,13 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { User } from '@prisma/client';
-import { prisma } from '../../../shared/prisma';
-import ApiError from '../../../errors/Apierror';
-import httpStatus from 'http-status';
 import bcrypt from 'bcrypt';
-import { jwtHelpers } from '../../../helpers/jwtHelpers';
-import config from '../../../config';
+import httpStatus from 'http-status';
 import { Secret } from 'jsonwebtoken';
+import config from '../../../config';
+import ApiError from '../../../errors/ApiError';
+import { jwtHelpers } from '../../../helpers/jwtHelpers';
+import { prisma } from '../../../shared/prisma';
 import { ILoginUser, ILoginUserResponse } from './auth.interface';
 
 export const insertIntoDB = async (payload: User) => {

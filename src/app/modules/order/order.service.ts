@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { prisma } from '../../../shared/prisma';
-import ApiError from '../../../errors/Apierror';
 import httpStatus from 'http-status';
+import ApiError from '../../../errors/ApiError';
+import { prisma } from '../../../shared/prisma';
 
 const insertIntoDB = async (user: any, payload: any) => {
   const { id, role } = user;

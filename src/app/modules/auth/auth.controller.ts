@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import catchAsync from '../../../shared/catchasync';
-import { AuthService } from './auth.service';
-import sendResponse from '../../../shared/sendResponse';
 import httpStatus from 'http-status';
 import config from '../../../config';
-// import config from '../../../config';
+import catchAsync from '../../../shared/catchAsync';
+import sendResponse from '../../../shared/sendResponse';
+import { AuthService } from './auth.service';
 
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.insertIntoDB(req.body);

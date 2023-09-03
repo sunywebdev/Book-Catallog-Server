@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import catchAsync from '../../../shared/catchasync';
-import sendResponse from '../../../shared/sendResponse';
-import httpStatus from 'http-status';
-import { CategoryService } from './category.service';
 import { Category } from '@prisma/client';
+import { Request, Response } from 'express';
+import httpStatus from 'http-status';
+import catchAsync from '../../../shared/catchAsync';
+import sendResponse from '../../../shared/sendResponse';
+import { CategoryService } from './category.service';
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
   const result = await CategoryService.createCategory(req.body);
